@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	timeout = 5 * time.Second
+	timeout = 40 * time.Second
 )
 
 type request struct {
@@ -78,7 +78,7 @@ func reader(sock *telnet.Conn, d chan string, e chan error) {
 			e <- err
 			return
 		}
-		str = strings.TrimSpace(str)
+		str = strings.TrimSpace(strings.Replace(str, "GNET> ", "", -1))
 		if str != "" {
 			d <- str
 		}
@@ -278,10 +278,12 @@ func (c *Conn) login(t *telnet.Conn) error {
 	}
 
 	// Expect and disable prompt.
-	if err := expect(t, "GNET> \x00"); err != nil {
+	if err := expect(t, "GNET> "); err != nil {
 		return err
 	}
 	if err := sendln(t, "#MONITORING,12,2"); err != nil {
+		// caseta doesn't support this, reporting ~ERROR,6
+		// this would be an ideal place to perform caseta detection
 		return err
 	}
 	t.SetReadDeadline(time.Time{})
